@@ -41,7 +41,7 @@ from isaaclab.assets import Articulation
 from isaaclab.sim import SimulationContext
 
 ##
-# Pre-defined configs
+# Pre-defined configs -> 기존에 있는 USD 파일로 정의된 파이썬 코드
 ##
 from isaaclab_assets import CARTPOLE_CFG  # isort:skip
 
@@ -63,7 +63,7 @@ def design_scene() -> tuple[dict, list[list[float]]]:
     # Origin 2
     prim_utils.create_prim("/World/Origin2", "Xform", translation=origins[1])
 
-    # Articulation
+    # Articulation : 미리 정의 관절 cfg을 복사하여 정의
     cartpole_cfg = CARTPOLE_CFG.copy()
     cartpole_cfg.prim_path = "/World/Origin.*/Robot"
     cartpole = Articulation(cfg=cartpole_cfg)
@@ -84,7 +84,7 @@ def run_simulator(sim: sim_utils.SimulationContext, entities: dict[str, Articula
     count = 0
     # Simulation loop
     while simulation_app.is_running():
-        # Reset
+        # 1. Reset
         if count % 500 == 0:
             # reset counter
             count = 0
@@ -92,20 +92,24 @@ def run_simulator(sim: sim_utils.SimulationContext, entities: dict[str, Articula
             # root state
             # we offset the root state by the origin since the states are written in simulation world frame
             # if this is not done, then the robots will be spawned at the (0, 0, 0) of the simulation world
+            # articulation.py 코드에서 Articulation를 상속받음
             root_state = robot.data.default_root_state.clone()
             root_state[:, :3] += origins
             robot.write_root_pose_to_sim(root_state[:, :7])
             robot.write_root_velocity_to_sim(root_state[:, 7:])
             # set joint positions with some noise
+            # rigid_object와 마찬가지로 torch의 텐서로 이루어져있음
+            # default_joint_pos = 디폴트 조인트 위치
             joint_pos, joint_vel = robot.data.default_joint_pos.clone(), robot.data.default_joint_vel.clone()
             joint_pos += torch.rand_like(joint_pos) * 0.1
             robot.write_joint_state_to_sim(joint_pos, joint_vel)
             # clear internal buffers
             robot.reset()
             print("[INFO]: Resetting robot state...")
-        # Apply random action
+        # 2. Apply random action
         # -- generate random joint efforts
         efforts = torch.randn_like(robot.data.joint_pos) * 5.0
+        print(efforts)
         # -- apply action to the robot
         robot.set_joint_effort_target(efforts)
         # -- write data to sim
@@ -114,7 +118,7 @@ def run_simulator(sim: sim_utils.SimulationContext, entities: dict[str, Articula
         sim.step()
         # Increment counter
         count += 1
-        # Update buffers
+        # 3. Update buffers
         robot.update(sim_dt)
 
 

@@ -33,6 +33,7 @@ CARTPOLE_CFG = ArticulationCfg(
             stabilization_threshold=0.001,
         ),
     ),
+    # cart 위치(1축), 폴 각도
     init_state=ArticulationCfg.InitialStateCfg(
         pos=(0.0, 0.0, 2.0), joint_pos={"slider_to_cart": 0.0, "cart_to_pole": 0.0}
     ),

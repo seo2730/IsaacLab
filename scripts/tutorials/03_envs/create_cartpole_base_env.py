@@ -39,6 +39,14 @@ import math
 import torch
 
 import isaaclab.envs.mdp as mdp
+# ManagerBasedRLEnv는 강화학습에 유용한 모듈이고 ManagerBasedEnv는 기존 로봇 제어가 쓰인다.
+# ManagerBasedRLEnv는 reward, termination, curriculum, command generation 등을 포함함
+# 다음 아래 4개가 ManagerBasedRLEnv의 하위 모듈이다.
+# InteractiveScene : 시뮬레이션 사용될 scene
+# ActionManager : action 매니저
+# ObservationManager : observation 매니저
+# EventManager : start, reset, periodic intervals 작업을 예약 관리(스케줄링)하는 매니저
+# 이러한 구성 요소를 구성함으로써 사용자는 최소한의 노력으로 동일한 환경의 다양한 변형을 만들 수 있다.
 from isaaclab.envs import ManagerBasedEnv, ManagerBasedEnvCfg
 from isaaclab.managers import EventTermCfg as EventTerm
 from isaaclab.managers import ObservationGroupCfg as ObsGroup
@@ -52,7 +60,8 @@ from isaaclab_tasks.manager_based.classic.cartpole.cartpole_env_cfg import Cartp
 @configclass
 class ActionsCfg:
     """Action specifications for the environment."""
-
+    # 기존 Articulation.set_joint_effort_target()과 달리 Action 매니저를 통해 action를 설정한다.
+    # 카트 좌우로 움직이게 하여 pole를 균형을 맞추도록 하기 위해 slider_to_cart만 액션으로 설정한다.
     joint_efforts = mdp.JointEffortActionCfg(asset_name="robot", joint_names=["slider_to_cart"], scale=5.0)
 
 
@@ -61,10 +70,15 @@ class ObservationsCfg:
     """Observation specifications for the environment."""
 
     @configclass
+    # ObservationGroupCfg를 상속받음
+    # 이 클래스는 다른 observation term들을 정의하고 관리하는 모듈
     class PolicyCfg(ObsGroup):
         """Observations for policy group."""
 
         # observation terms (order preserved)
+        # ObservationTermCfg는 관측할 값들의 함수 및 클래스 정의한다.
+        # 관측할 값들을 노이즈 모델, clipping, scaling 등을 통해 변환할 수 있다.
+        # 여기서는 디폴트 값만 사용
         joint_pos_rel = ObsTerm(func=mdp.joint_pos_rel)
         joint_vel_rel = ObsTerm(func=mdp.joint_vel_rel)
 
@@ -77,10 +91,20 @@ class ObservationsCfg:
 
 
 @configclass
+# 시뮬레이션의 상태를 변경과 관련된 이벤트 클래스이다.
+# 예시 : resetting (or randomizing) the scene, 
+#       randomizing physical properties (such as mass, friction, etc.)
+#       varying visual properties (such as colors, textures, etc.).
+# EventTermCfg를 통해 정의할 수 있다.
+# mode : startup, reset, periodic 3개를 정의하고 싶으면 ManagerBasedEnv 클래스를 사용해야 한다.
+# startup : 시뮬레이션 시작시 실행
+# reset : 환경을 리셋할 때 실행
+# periodic : 특정 주기 때 이벤트를 실행
 class EventCfg:
     """Configuration for events."""
 
     # on startup
+    # mass를 랜덤하게 정의
     add_pole_mass = EventTerm(
         func=mdp.randomize_rigid_body_mass,
         mode="startup",
@@ -92,6 +116,7 @@ class EventCfg:
     )
 
     # on reset
+    # joint state를 랜덤하게 초기화
     reset_cart_position = EventTerm(
         func=mdp.reset_joints_by_offset,
         mode="reset",

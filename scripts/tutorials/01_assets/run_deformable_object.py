@@ -120,12 +120,16 @@ def run_simulator(sim: sim_utils.SimulationContext, entities: dict[str, Deformab
             print("----------------------------------------")
             print("[INFO]: Resetting object state...")
 
-        # update the kinematic target for cubes at index 0 and 3
+        # update the kinematic target for cubes at index 0 and 3 -> 0번째, 3번째 큐브 선택
         # we slightly move the cube in the z-direction by picking the vertex at index 0
+        # 1번째 : bottom-left corner -> 여러 가지 점들이 있음
+        # 2번째 : pos, 2번째 : z축
         nodal_kinematic_target[[0, 3], 0, 2] += 0.001
+        # nodal_kinematic_target[[0, 3], -1, 2] -= 0.001
         # set vertex at index 0 to be kinematically constrained
         # 0: constrained, 1: free
-        nodal_kinematic_target[[0, 3], 0, 3] = 0.0
+        nodal_kinematic_target[[0, 3], 0, 3] = 0
+        # nodal_kinematic_target[[0, 3], -1, 3] = 0
         # write kinematic target to simulation
         cube_object.write_nodal_kinematic_target_to_sim(nodal_kinematic_target)
 

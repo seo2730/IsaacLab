@@ -36,7 +36,7 @@ simulation_app = app_launcher.app
 import torch
 
 import isaaclab.sim as sim_utils
-from isaaclab.assets import ArticulationCfg, AssetBaseCfg
+from isaaclab.assets import Articulation,ArticulationCfg, AssetBaseCfg
 from isaaclab.scene import InteractiveScene, InteractiveSceneCfg
 from isaaclab.sim import SimulationContext
 from isaaclab.utils import configclass
@@ -60,7 +60,15 @@ class CartpoleSceneCfg(InteractiveSceneCfg):
     )
 
     # articulation
+    # {ENV_REGEX_NS} = /World/envs/env_{i}로 isaac_sim에서 표현
+    # replace로 문자열을 변경
     cartpole: ArticulationCfg = CARTPOLE_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
+    
+    # 이건 왜 안되지?
+    # 오류 : ValueError: Prim path '{ENV_REGEX_NS}/Robot' is not global. It must start with '/'.
+    # cartpole_cfg = CARTPOLE_CFG.copy()
+    # cartpole_cfg.prim_path="{ENV_REGEX_NS}/Robot"
+    # cartpole = Articulation(cfg=cartpole_cfg)
 
 
 def run_simulator(sim: sim_utils.SimulationContext, scene: InteractiveScene):
